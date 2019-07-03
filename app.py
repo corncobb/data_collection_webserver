@@ -1,0 +1,213 @@
+#!/usr/bin/env python3.6
+
+#import data_receiver
+import dash
+import dash_table
+import pandas as pd
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Output, Input
+import random
+import datetime
+from datetime import timedelta
+import time
+from time import mktime
+import plotly
+import copy
+import sqlite3
+import os.path
+
+from subprocess import Popen
+
+Popen('python data_receiver.py')
+
+time.sleep(3)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(BASE_DIR, "data.db")
+conn = sqlite3.connect(db_path, check_same_thread=False)
+
+c = conn.cursor()
+
+columns = ['Machine','State', 'Last Received', 'Total Cycle Count',	'CPM by Operation Time', 
+'CPM by Shift Time', 'Encoder Count (ft)', 'Down Time', 'Operation Time (shift time-downtime)', 
+'Shift Time','Total Shift Time (minutes)', 'Total Operation Time (minutes)']
+
+app = dash.Dash(__name__)
+
+app.layout = html.Div([
+    html.Div(
+        html.H1(["Data Dashboard"], className="gs-header gs-text-header padded",style={'marginTop': 15, 'textAlign':'center', 'fontFamily': 'Arial'})),
+    html.Div(id='datatable'),
+    html.Div(dcc.Graph(id='live-update-graph')),
+    dcc.Interval(
+        id='interval-component',
+        interval=60*1000, # in milliseconds. Updates the graph every 60 seconds
+        n_intervals=0
+    ),
+])
+
+def retrieve_recent(machine):
+  c.execute("SELECT * FROM data_points WHERE machine=:machine ORDER BY id DESC LIMIT 1", {'machine': machine})
+  data = c.fetchone() 
+  if data == None:
+    return (0,0,0,str(datetime.datetime(2000,1,1,hour=0, minute=0, second=0,  microsecond=0)),0,0,0,0,0,0,0)
+  else:
+    return data
+
+#returns a list so it can display in the graph
+def retrieve_cpm_by_operation(machine):
+  cpm_list = []
+  c.execute("SELECT * FROM data_points WHERE machine=:machine ORDER BY id DESC LIMIT 4320", {'machine': machine}) #limit is 1440 to return the list of data over the last 24 hours
+  data = c.fetchall()
+  for x in data:
+    cpm_list.append(x[5])
+  return cpm_list
+
+#returns a list so it can display in the graph
+def retrieve_time_list(machine):
+  cpm_list = []
+  c.execute("SELECT * FROM data_points WHERE machine=:machine ORDER BY time DESC LIMIT 4320", {'machine': machine}) #limit is 1440 to return the list of data over the last 24 hours
+  data = c.fetchall()
+  for x in data:
+    cpm_list.append(x[3])
+  return cpm_list
+
+@app.callback(
+    Output('datatable', "children"),
+    [Input('interval-component', "n_intervals")])
+
+def update_table(n):
+
+    machine_one_status_data = retrieve_recent(1) #Returns a tuple of the recent data from machine one
+    machine_two_status_data = retrieve_recent(2) #Same as above for for machine two
+
+    display_table = [
+        dash_table.DataTable(
+            id = 'live-update-table',
+            columns = [{"name": i, "id": i} for i in columns],
+            data = [{
+                    #Machine 1 data
+                    'Machine': 'Line ' + str(machine_one_status_data[1]),
+                    'State': machine_one_status_data[2],
+                    'Last Received': machine_one_status_data[3],
+                    'Total Cycle Count': machine_one_status_data[4],
+                    'CPM by Operation Time': machine_one_status_data[5],
+                    'CPM by Shift Time': machine_one_status_data[6],
+                    'Encoder Count (ft)': machine_one_status_data[7],
+                    'Down Time': str(datetime.timedelta(minutes = machine_one_status_data[8])),
+                    'Shift Time': str(datetime.timedelta(minutes = machine_one_status_data[9])),
+                    'Operation Time (shift time-downtime)': str(datetime.timedelta(minutes = machine_one_status_data[9] - machine_one_status_data[8])),
+                    'Total Shift Time (minutes)': machine_one_status_data[9],
+                    'Total Operation Time (minutes)': machine_one_status_data[8],
+                    },
+                    #Machine 2 data
+                    {'Machine': 'Line ' + str(machine_two_status_data[1]),
+                    'State': machine_two_status_data[2],
+                    'Last Received': machine_two_status_data[3],
+                    'Total Cycle Count': machine_two_status_data[4],
+                    'CPM by Operation Time': machine_two_status_data[5],
+                    'CPM by Shift Time': machine_two_status_data[6],
+                    'Encoder Count (ft)': machine_two_status_data[7],
+                    'Down Time': str(datetime.timedelta(minutes = machine_two_status_data[8])),
+                    'Shift Time': str(datetime.timedelta(minutes = machine_two_status_data[9])),
+                    'Operation Time (shift time-downtime)': str(datetime.timedelta(minutes = machine_two_status_data[9] - machine_two_status_data[8])),
+                    'Total Shift Time (minutes)': machine_two_status_data[9],
+                    'Total Operation Time (minutes)': machine_two_status_data[8],
+                    },
+                    ],      
+            style_cell={
+                # all three widths are needed
+                'minWidth': '80px', 'width': '80px', 'maxWidth': '80px',
+                'whiteSpace': 'normal',
+                'fontFamily': 'Arial', 
+                'size': 10,
+                'textAlign': 'left'
+            },
+            css=[{
+                'selector': '.dash-cell div.dash-cell-value',
+                'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
+            }],
+            style_cell_conditional=[{
+                'if': {
+                    'column_id': 'State',
+                    'filter': '{State} eq "RUNNING"'
+                },
+                'backgroundColor': '#0be000',
+                'color': 'white',
+                'textAlign': 'center',
+                },
+                {
+                'if': {
+                    'column_id': 'State',
+                    'filter': '{State} eq "DOWN"'
+                },
+                'backgroundColor': '#e07000',
+                'color': 'white',
+                'textAlign': 'center',
+                },
+                {
+                'if': {
+                    'column_id': 'State',
+                    'filter': '{State} eq "OFF"'
+                },
+                'backgroundColor': '#f00000',
+                'color': 'white',
+                'textAlign': 'center',
+                }],
+            style_header={'backgroundColor': '#EC1B2E','color': 'white'},
+        )]
+
+    return display_table
+
+@app.callback(Output('live-update-graph', 'figure'),
+              [Input('interval-component', 'n_intervals')])
+
+def update_graph_live(n):
+
+    #X.append(X[-1]+1)
+    #Y.append(random.randint(0,30))
+    #for i in range(180):
+        #time = datetime.datetime.now() - datetime.timedelta(seconds=i*20)
+    
+    fig = plotly.tools.make_subplots(rows=1, cols=1, vertical_spacing=0.2)
+
+    fig['layout'] = {'autosize':False,
+                     'title':'CPM by Operation Time',
+                     'paper_bgcolor':'#e8e8e8',
+                     'plot_bgcolor':'#c7c7c7',
+                     #'margin':{'l': 30, 'r': 10, 'b': 30, 't': 30},
+                     #'legend':{'x': 0, 'y': 1, 'xanchor': 'right'},
+                     'xaxis':{'range':[datetime.datetime.now() - datetime.timedelta(minutes=60),
+                            datetime.datetime.now()], #This is for the range of the x-axis
+                            'title': 'Time'},
+                    'yaxis': {'title': 'CPM by Operation Time'},
+                    'showlegend': True
+                    }
+    #line 1
+    trace_one = {'type':'scatter',
+                    'x':retrieve_time_list(1),
+                    'y':retrieve_cpm_by_operation(1),
+                    'name':'Line 1',
+                    'mode':'lines+markers',
+                    'line':{'color':'red'}
+                    }
+    #line 2
+    trace_two = {'type':'scatter',
+                    'x':retrieve_time_list(2),
+                    'y':retrieve_cpm_by_operation(2),
+                    'name':'Line 2',
+                    'mode':'lines+markers',
+                    'line':{'color':'blue'}
+                    }
+
+    fig.append_trace(trace_one, 1, 1)
+    fig.append_trace(trace_two, 1, 1)
+
+    return fig
+
+def main():
+  app.run_server(debug=True, host="0.0.0.0", port=8050, use_reloader=False) #dubug=True
+    
+if __name__ == '__main__':
+  main()
