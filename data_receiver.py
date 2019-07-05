@@ -4,10 +4,10 @@ import paho.mqtt.client as mqtt
 import sqlite3
 import random
 import datetime
+import credentials
 
-#broker = "192.168.2.23"
-broker = "test.mosquitto.org"
-machines = 2 #total number of machines
+broker = credentials.credentials['broker']
+machines = 2 #total number of machines. This will change once more machines are introduced
 
 conn = sqlite3.connect('data.db', check_same_thread=False)
 
@@ -65,7 +65,6 @@ def delete_data(m): #the machine number needs to be passed in order to delete th
   with conn:
     c.execute("DELETE FROM data_points WHERE id<=:id", {'id': machine_id}) #deletes data points that are greater than 7 days old
 
- 
 # The callback for when the client receives a CONNECT response from the server.
 
 def on_connect(client, userdata, flags, rc):

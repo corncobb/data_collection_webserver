@@ -155,7 +155,7 @@ def update_table(n):
                 'color': 'white',
                 'textAlign': 'center',
                 }],
-            style_header={'backgroundColor': '#EC1B2E','color': 'white'},
+            style_header={'backgroundColor': '#000000','color': 'white'},
         )]
 
     return display_table
@@ -165,11 +165,6 @@ def update_table(n):
 
 def update_graph_live(n):
 
-    #X.append(X[-1]+1)
-    #Y.append(random.randint(0,30))
-    #for i in range(180):
-        #time = datetime.datetime.now() - datetime.timedelta(seconds=i*20)
-    
     fig = plotly.tools.make_subplots(rows=1, cols=1, vertical_spacing=0.2)
 
     fig['layout'] = {'autosize':False,
@@ -179,7 +174,7 @@ def update_graph_live(n):
                      #'margin':{'l': 30, 'r': 10, 'b': 30, 't': 30},
                      #'legend':{'x': 0, 'y': 1, 'xanchor': 'right'},
                      'xaxis':{'range':[datetime.datetime.now() - datetime.timedelta(minutes=60),
-                            datetime.datetime.now()], #This is for the range of the x-axis
+                            datetime.datetime.now()], #This is for the range of the x-axis. Right now the range will show last hour
                             'title': 'Time'},
                     'yaxis': {'title': 'CPM by Operation Time'},
                     'showlegend': True
