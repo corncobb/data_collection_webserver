@@ -1,13 +1,21 @@
-#!python3.6
- 
-import paho.mqtt.client as mqtt
+#!/usr/bin/env python3.6
+
+#Standard imports
 import sqlite3
-import random
 import datetime
+from multiprocessing import Process
+import time
+
+#Third party improts
+import paho.mqtt.client as mqtt
 import credentials
+import schedule
 
 broker = credentials.credentials['broker']
+#broker = "test.mosquitto.org" #for testing purposes ONLY
 machines = 2 #total number of machines. This will change once more machines are introduced
+
+current_machines = [2] #list the machines id that will be running and connecting to the database, not in use yet
 
 conn = sqlite3.connect('data.db', check_same_thread=False)
 
@@ -59,11 +67,6 @@ def retrieve_recent(machine):
 def retrieve_all(): #this is used for debugging
   c.execute("SELECT * FROM data_points")
   return c.fetchall()
-
-def delete_data(m): #the machine number needs to be passed in order to delete the data
-  machine_id = current_id(m) - 4320 #Will keep 4320 data points, or 3 days worth of data
-  with conn:
-    c.execute("DELETE FROM data_points WHERE id<=:id", {'id': machine_id}) #deletes data points that are greater than 7 days old
 
 # The callback for when the client receives a CONNECT response from the server.
 

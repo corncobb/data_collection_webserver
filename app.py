@@ -1,25 +1,33 @@
 #!/usr/bin/env python3.6
 
-#import data_receiver
-import dash
-import dash_table
-import pandas as pd
-import dash_core_components as dcc
-import dash_html_components as html
-from dash.dependencies import Output, Input
+#NOTE: If more machines are added, table needs to be changed, and data receiver needs to be changed.
+
+#Standard imports
 import random
 import datetime
 from datetime import timedelta
 import time
 from time import mktime
-import plotly
-import copy
-import sqlite3
 import os.path
-
+import sqlite3
 from subprocess import Popen
 
+#Third party improts
+import dash
+import dash_table
+import dash_core_components as dcc
+import dash_html_components as html
+from dash.dependencies import Output, Input
+import pandas as pd
+import plotly
+import credentials
+
+#This is to run the data receiver script
 Popen('python data_receiver.py')
+
+time.sleep(3)
+
+Popen('python delete_data.py')
 
 time.sleep(3)
 
@@ -76,31 +84,16 @@ def retrieve_time_list(machine):
 @app.callback(
     Output('datatable', "children"),
     [Input('interval-component', "n_intervals")])
-
 def update_table(n):
 
-    machine_one_status_data = retrieve_recent(1) #Returns a tuple of the recent data from machine one
+    #machine_one_status_data = retrieve_recent(1) #Returns a tuple of the recent data from machine one
     machine_two_status_data = retrieve_recent(2) #Same as above for for machine two
 
     display_table = [
         dash_table.DataTable(
             id = 'live-update-table',
             columns = [{"name": i, "id": i} for i in columns],
-            data = [{
-                    #Machine 1 data
-                    'Machine': 'Line ' + str(machine_one_status_data[1]),
-                    'State': machine_one_status_data[2],
-                    'Last Received': machine_one_status_data[3],
-                    'Total Cycle Count': machine_one_status_data[4],
-                    'CPM by Operation Time': machine_one_status_data[5],
-                    'CPM by Shift Time': machine_one_status_data[6],
-                    'Encoder Count (ft)': machine_one_status_data[7],
-                    'Down Time': str(datetime.timedelta(minutes = machine_one_status_data[8])),
-                    'Shift Time': str(datetime.timedelta(minutes = machine_one_status_data[9])),
-                    'Operation Time (shift time-downtime)': str(datetime.timedelta(minutes = machine_one_status_data[9] - machine_one_status_data[8])),
-                    'Total Shift Time (minutes)': machine_one_status_data[9],
-                    'Total Operation Time (minutes)': machine_one_status_data[8],
-                    },
+            data = [
                     #Machine 2 data
                     {'Machine': 'Line ' + str(machine_two_status_data[1]),
                     'State': machine_two_status_data[2],
@@ -162,7 +155,6 @@ def update_table(n):
 
 @app.callback(Output('live-update-graph', 'figure'),
               [Input('interval-component', 'n_intervals')])
-
 def update_graph_live(n):
 
     fig = plotly.tools.make_subplots(rows=1, cols=1, vertical_spacing=0.2)
@@ -187,7 +179,7 @@ def update_graph_live(n):
                     'mode':'lines+markers',
                     'line':{'color':'red'}
                     }
-    #line 2
+    #line 2 (NOTE: Will only show if data exists)
     trace_two = {'type':'scatter',
                     'x':retrieve_time_list(2),
                     'y':retrieve_cpm_by_operation(2),

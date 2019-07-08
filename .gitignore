@@ -1,2 +1,4 @@
 #Ignores sensitive credentials
 credentials.py
+
+data.db
