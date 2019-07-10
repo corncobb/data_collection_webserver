@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 import time
 import sqlite3
@@ -25,6 +25,7 @@ def current_id(machine): #gives each new row a unique id so the most recent N po
 def delete_data(): #the machine number needs to be passed in order to delete the data
 
     global current_machines
+
     for x in current_machines:
 
       machine_id = current_id(x) - 4320 #Will keep 4320 data points, or 3 days worth of data
@@ -34,11 +35,10 @@ def delete_data(): #the machine number needs to be passed in order to delete the
 
     print("Data has been removed")
 
-
 schedule.every().day.at("01:00").do(delete_data) #everyday at 1 am clean the DB
 
 def main():
-  print("Deleting data script has started")
+  print("delete_data.py script has started")
   while True:
       schedule.run_pending()
       time.sleep(60)

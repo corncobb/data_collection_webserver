@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 #NOTE: If more machines are added, table needs to be changed, and data receiver needs to be changed.
 
@@ -18,11 +18,11 @@ import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Output, Input
-import pandas as pd
 import plotly
 import credentials
 
 #This is to run the data receiver script
+#NOTE: Use 'python3' for raspberry pi
 Popen('python data_receiver.py')
 
 time.sleep(3)
@@ -44,16 +44,16 @@ columns = ['Machine','State', 'Last Received', 'Total Cycle Count',	'CPM by Oper
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
-    html.Div(
-        html.H1(["Data Dashboard"], className="gs-header gs-text-header padded",style={'marginTop': 15, 'textAlign':'center', 'fontFamily': 'Arial'})),
-    html.Div(id='datatable'),
-    html.Div(dcc.Graph(id='live-update-graph')),
+    html.H1(["Data Dashboard"]),
+    html.Div(id='datatable', className="data-table-component"),
+    html.Br(),
+    html.Div(dcc.Graph(id='live-update-graph'), className="graph-component"),
     dcc.Interval(
         id='interval-component',
         interval=60*1000, # in milliseconds. Updates the graph every 60 seconds
         n_intervals=0
     ),
-])
+], className="container")
 
 def retrieve_recent(machine):
   c.execute("SELECT * FROM data_points WHERE machine=:machine ORDER BY id DESC LIMIT 1", {'machine': machine})
@@ -108,10 +108,15 @@ def update_table(n):
                     'Total Shift Time (minutes)': machine_two_status_data[9],
                     'Total Operation Time (minutes)': machine_two_status_data[8],
                     },
-                    ],      
+                    ],    
+            style_table={
+              'width': '80p%',
+              'margin-left': 'auto',
+              'margin-right': 'auto'
+            },  
             style_cell={
                 # all three widths are needed
-                'minWidth': '80px', 'width': '80px', 'maxWidth': '80px',
+                'minWidth': '100px', 'width': '120px', 'maxWidth': '200px',
                 'whiteSpace': 'normal',
                 'fontFamily': 'Arial', 
                 'size': 10,
@@ -121,10 +126,17 @@ def update_table(n):
                 'selector': '.dash-cell div.dash-cell-value',
                 'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
             }],
-            style_cell_conditional=[{
+            style_data_conditional=[
+              {
+                'if': {
+                  'column_id': 'Last Received'
+                },
+                'width': '15%'
+              },
+              {
                 'if': {
                     'column_id': 'State',
-                    'filter': '{State} eq "RUNNING"'
+                    'filter_query': '{State} eq "RUNNING"'
                 },
                 'backgroundColor': '#0be000',
                 'color': 'white',
@@ -133,7 +145,7 @@ def update_table(n):
                 {
                 'if': {
                     'column_id': 'State',
-                    'filter': '{State} eq "DOWN"'
+                    'filter_query': '{State} eq "DOWN"'
                 },
                 'backgroundColor': '#e07000',
                 'color': 'white',
@@ -142,7 +154,7 @@ def update_table(n):
                 {
                 'if': {
                     'column_id': 'State',
-                    'filter': '{State} eq "OFF"'
+                    'filter_query': '{State} eq "OFF"'
                 },
                 'backgroundColor': '#f00000',
                 'color': 'white',
@@ -159,34 +171,37 @@ def update_graph_live(n):
 
     fig = plotly.tools.make_subplots(rows=1, cols=1, vertical_spacing=0.2)
 
-    fig['layout'] = {'autosize':False,
-                     'title':'CPM by Operation Time',
-                     'paper_bgcolor':'#e8e8e8',
-                     'plot_bgcolor':'#c7c7c7',
-                     #'margin':{'l': 30, 'r': 10, 'b': 30, 't': 30},
-                     #'legend':{'x': 0, 'y': 1, 'xanchor': 'right'},
-                     'xaxis':{'range':[datetime.datetime.now() - datetime.timedelta(minutes=60),
+    fig['layout'] = {
+                    'autosize': True,
+                    'title':'CPM by Operation Time',
+                    'paper_bgcolor':'rgba(0,0,0,0)',
+                    'plot_bgcolor':'#e6e6e6',
+                    #'automargin': True,
+                    #'legend':{'x': 0, 'y': 1, 'xanchor': 'right'},
+                    'xaxis':{'range':[datetime.datetime.now() - datetime.timedelta(minutes=60),
                             datetime.datetime.now()], #This is for the range of the x-axis. Right now the range will show last hour
                             'title': 'Time'},
                     'yaxis': {'title': 'CPM by Operation Time'},
                     'showlegend': True
                     }
     #line 1
-    trace_one = {'type':'scatter',
-                    'x':retrieve_time_list(1),
-                    'y':retrieve_cpm_by_operation(1),
-                    'name':'Line 1',
-                    'mode':'lines+markers',
-                    'line':{'color':'red'}
-                    }
+    trace_one = {
+                'type':'scatter',
+                'x':retrieve_time_list(1),
+                'y':retrieve_cpm_by_operation(1),
+                'name':'Line 1',
+                'mode':'lines+markers',
+                'line':{'color':'red'}
+                }
     #line 2 (NOTE: Will only show if data exists)
-    trace_two = {'type':'scatter',
-                    'x':retrieve_time_list(2),
-                    'y':retrieve_cpm_by_operation(2),
-                    'name':'Line 2',
-                    'mode':'lines+markers',
-                    'line':{'color':'blue'}
-                    }
+    trace_two = {
+                'type':'scatter',
+                'x':retrieve_time_list(2),
+                'y':retrieve_cpm_by_operation(2),
+                'name':'Line 2',
+                'mode':'lines+markers',
+                'line':{'color':'blue'}
+                }
 
     fig.append_trace(trace_one, 1, 1)
     fig.append_trace(trace_two, 1, 1)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 #Standard imports
 import sqlite3
@@ -28,9 +28,9 @@ try:
               state text,
               time text,
               count integer,
-              operation integer,
-              shift integer,
-              encoder integer,
+              operation real,
+              shift real,
+              encoder real,
               downTime integer,
               shiftTime integer,
               operationTime integer
@@ -91,9 +91,9 @@ def on_message(client, userdata, msg):
       state = incoming_data[1]
       Ttime = incoming_data[2]
       count = int(incoming_data[3])
-      operation = int(incoming_data[4])
-      shift = int(incoming_data[5])
-      encoder = int(incoming_data[6])
+      operation = float(incoming_data[4])
+      shift = float(incoming_data[5])
+      encoder = float(incoming_data[6])
       downTime = int(incoming_data[7])
       shiftTime = int(incoming_data[8])
       operationTime = int(incoming_data[9])
@@ -104,7 +104,7 @@ def on_message(client, userdata, msg):
  
 # Create an MQTT client and attach our routines to it.
 def main():
-    #print(retrieve_all()) #prints all in database, used for debugging
+    print(retrieve_all()) #prints all in database, used for debugging
     topics = []
     qos = 0
     for x in range(machines): # put how many machines there are here
