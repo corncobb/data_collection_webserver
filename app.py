@@ -44,16 +44,17 @@ columns = ['Machine','State', 'Last Received', 'Total Cycle Count',	'CPM by Oper
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
-    html.H1(["Data Dashboard"]),
-    html.Div(id='datatable', className="data-table-component"),
+    html.Div([
+    html.H1('Data Dashboard'),
+    html.Div(id='datatable')], className='data-table-component'),
     html.Br(),
-    html.Div(dcc.Graph(id='live-update-graph'), className="graph-component"),
+    html.Div(dcc.Graph(id='live-update-graph'), className='graph-component'),
     dcc.Interval(
         id='interval-component',
         interval=60*1000, # in milliseconds. Updates the graph every 60 seconds
         n_intervals=0
     ),
-], className="container")
+], className='container')
 
 def retrieve_recent(machine):
   c.execute("SELECT * FROM data_points WHERE machine=:machine ORDER BY id DESC LIMIT 1", {'machine': machine})

@@ -5,6 +5,7 @@ import sqlite3
 import datetime
 from multiprocessing import Process
 import time
+import sys
 
 #Third party improts
 import paho.mqtt.client as mqtt
@@ -120,8 +121,11 @@ def main():
     client.on_message = on_message
 
     print("\n" + '*'*30 + "\nConnecting to broker: " + broker)
-     
-    client.connect(broker, 1883, 60)
+    try:
+      client.connect(broker, 1883, 60)
+    except:
+      print("Failed to connect to broker! Ending program")
+      sys.exit()
 
     r = client.subscribe(topics)
 
