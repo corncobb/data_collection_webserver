@@ -7,6 +7,8 @@ import os
 import schedule
 import credentials
 
+#This is to specify the directory of the DB. Having a ton of problems while trying 
+#to do this on Linux but Windows worked fine -_-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "data.db")
 conn = sqlite3.connect(db_path, check_same_thread=False)

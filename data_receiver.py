@@ -6,6 +6,7 @@ import datetime
 from multiprocessing import Process
 import time
 import sys
+import os.path
 
 #Third party improts
 import paho.mqtt.client as mqtt
@@ -18,7 +19,11 @@ machines = 2 #total number of machines. This will change once more machines are 
 
 current_machines = [2] #list the machines id that will be running and connecting to the database, not in use yet
 
-conn = sqlite3.connect('data.db', check_same_thread=False)
+#This is to specify the directory of the DB. Having a ton of problems while trying 
+#to do this on Linux but Windows worked fine -_-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(BASE_DIR, "data.db")
+conn = sqlite3.connect(db_path, check_same_thread=False)
 
 c = conn.cursor()
 
@@ -105,7 +110,7 @@ def on_message(client, userdata, msg):
  
 # Create an MQTT client and attach our routines to it.
 def main():
-    print(retrieve_all()) #prints all in database, used for debugging
+    #print(retrieve_all()) #prints all in database, used for debugging
     topics = []
     qos = 0
     for x in range(machines): # put how many machines there are here
