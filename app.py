@@ -174,7 +174,7 @@ def update_graph_live(n):
                     'xaxis':{'range':[datetime.datetime.now() - datetime.timedelta(minutes=60),
                             datetime.datetime.now()], #This is for the range of the x-axis. Right now the range will show last hour
                             'title': 'Time'},
-                    'yaxis': {'title': 'CPM by Operation Time'},
+                    'yaxis': {'range':[50,70], 'title': 'CPM by Operation Time'},
                     'showlegend': True
                     }
     #line 1
