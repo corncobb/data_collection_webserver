@@ -62,7 +62,11 @@ def retrieve_cpm_by_operation(machine):
   c.execute("SELECT * FROM data_points WHERE machine=:machine ORDER BY id DESC LIMIT 4320", {'machine': machine}) #limit is 1440 to return the list of data over the last 24 hours
   data = c.fetchall()
   for x in data:
-    cpm_list.append(x[5])
+    #if the machine is "DOWN" or "OFF" then it will show 0 in the graph. This was requested by Josh
+    if x[2] != "RUNNING":
+      cpm_list.append(0)
+    else:
+      cpm_list.append(x[5])
   return cpm_list
 
 #returns a list so it can display in the graph
