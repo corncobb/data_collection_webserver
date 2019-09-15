@@ -1,0 +1,12 @@
+web_runner.sh file may need permission in order to run. Look here
+for reference: https://askubuntu.com/questions/409025/permission-denied-when-running-sh-scripts
+
+
+This goes inside of rc.local if not already there:
+
+sleep 15
+/home/{ user }/Desktop/data_collection_webserver/web_runner.sh &
+iwconfig wlan0 power off #turns off power saver
+exit 0
+
+credentials.py does NOT come with git repo and must be optained by other needs
